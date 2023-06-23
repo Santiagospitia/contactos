@@ -16,7 +16,7 @@ app.secret_key = 'mysecretkey' ### BUSCAR MEJOR EXPLICACION
 @app.route('/')
 def index():
     cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM CONTACTS')
+    cur.execute('SELECT * FROM contacts')
     data = cur.fetchall()
     return render_template('index.html', contacts = data)
 
@@ -34,9 +34,28 @@ def addContact():
         flash('Contacto agregado satisfactoriamente')
         return redirect(url_for('index'))
 
-@app.route('/edit')
-def editarContacto():
-    return 'editar contacto'
+@app.route('/edit/<id>')
+def editarContacto(id):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM contacts where id =%s', (id))
+    dato = cur.fetchall()
+    return render_template('edit-contact.html', contacto = dato[0])
+
+@app.route('/update/<id>', methods = ['POST'])
+def actualizarContacto(id):
+    if request.method == 'POST':
+        fullname = request.form["fullname"]
+        phone = request.form["phone"]
+        email = request.form["email"]
+        cur = mysql.connection.cursor()
+        cur.execute(""" UPDATE contacts
+                        SET fullname = %s,
+                        phone = %s,
+                        email = %s
+                        WHERE id=%s""", (fullname, phone, email, id))
+        flash('Contacto actualizado satisfactoriamente')
+        mysql.connection.commit()
+        return redirect(url_for('index'))
 
 @app.route('/delete/<string:id>')
 def borrarContacto(id):    
